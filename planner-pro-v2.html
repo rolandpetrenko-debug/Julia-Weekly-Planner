@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Weekly Planner">
+    <title>Weekly Planner Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f0ebe0;
+            color: #333;
+            overflow-x: hidden;
+            font-size: 16px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-family: inherit;
+            cursor: pointer;
+            color: #999;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: #333;
+            border-bottom-color: #4CAF50;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #f9f9f9;
+            border-color: #999;
+        }
+
+        .btn.primary {
+            background: #4CAF50;
+            color: white;
+            border: none;
+        }
+
+        .btn.primary:hover {
+            background: #45a049;
+        }
+
+        /* Notebook Pages */
+        .notebook {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            min-height: 700px;
+        }
+
+        /* Spiral Binding */
+        .spiral {
+            width: 30px;
+            flex-shrink: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                #333 0px,
+                #333 2px,
+                transparent 2px,
+                transparent 40px
+            );
+            position: relative;
+        }
+
+        /* Pages */
+        .page {
+            flex: 1;
+            padding: 30px;
+            position: relative;
+            background: linear-gradient(180deg, #fffef5 0%, #fffdf2 100%);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent 0px,
+                transparent 29px,
+                #e0ddd0 30px,
+                #e0ddd0 31px
+            );
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .page-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Day Cards */
+        .day-card {
+            background: #f5f1e8;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 2px solid #e0ddd0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .day-card:hover {
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .day-card.today {
+            background: #fffacd;
+            border-color: #FFD700;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #e0ddd0;
+            padding-bottom: 8px;
+        }
+
+        .day-abbr {
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .day-num {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .day-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .day-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .day-actions button:hover {
+            color: #4CAF50;
+        }
+
+        /* Events */
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .event {
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            border-left: 4px solid #4CAF50;
+            cursor: pointer;
+            transition: all 0.2s;
+            word-break: break-word;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .event:hover {
+            background: #fafafa;
+            transform: translateX(2px);
+        }
+
+        .event.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+            border-left-color: #ccc;
+        }
+
+        .event.highlight-red { border-left-color: #ff6b6b; }
+        .event.highlight-yellow { border-left-color: #FFD700; }
+        .event.highlight-blue { border-left-color: #4A90E2; }
+        .event.highlight-green { border-left-color: #4CAF50; }
+        .event.highlight-purple { border-left-color: #9b59b6; }
+
+        .event-content {
+            flex: 1;
+        }
+
+        .event-time {
+            font-weight: bold;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .event-title {
+            color: #333;
+            margin: 2px 0;
+        }
+
+        .event-emoji {
+            font-size: 16px;
+            margin-left: 4px;
+        }
+
+        .empty-state {
+            color: #bbb;
+            font-style: italic;
+            font-size: 12px;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        /* Stats Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 4px;
+        }
+
+        .stat-emoji {
+            font-size: 24px;
+        }
+
+        /* Streak */
+        .streak-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 2px solid #FFD700;
+            text-align: center;
+        }
+
+        .streak-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #FFD700;
+            margin: 10px 0;
+        }
+
+        .streak-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Heat Map */
+        .heatmap-container {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .heatmap-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .heatmap-day {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+            font-weight: bold;
+            background: #f0f0f0;
+        }
+
+        .heatmap-day.active-1 { background: #c6e48b; }
+        .heatmap-day.active-2 { background: #7bc96f; }
+        .heatmap-day.active-3 { background: #239a3b; }
+        .heatmap-day.active-4 { background: #196127; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: flex-end;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 24px;
+            width: 100%;
+            max-width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #f0f0f0;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Emoji Picker */
+        .emoji-picker {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .emoji-btn {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .emoji-btn:hover {
+            background: #f0f0f0;
+            transform: scale(1.1);
+        }
+
+        .emoji-btn.selected {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+
+        /* Color Picker */
+        .color-picker {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .color-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .color-btn.selected {
+            border-color: #333;
+            transform: scale(1.15);
+        }
+
+        .color-red { background: #ff6b6b; }
+        .color-yellow { background: #FFD700; }
+        .color-blue { background: #4A90E2; }
+        .color-green { background: #4CAF50; }
+        .color-purple { background: #9b59b6; }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 16px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+
+        .button-group button {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .button-group .save-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .button-group .cancel-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .button-group .delete-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        .detail-row label {
+            font-weight: bold;
+            color: #666;
+        }
+
+        .detail-row .value {
+            color: #333;
+            text-align: right;
+        }
+
+        @media (max-width: 768px) {
+            .notebook {
+                flex-direction: column;
+            }
+
+            .spiral {
+                width: 100%;
+                height: 20px;
+                background: repeating-linear-gradient(
+                    90deg,
+                    #333 0px,
+                    #333 2px,
+                    transparent 2px,
+                    transparent 40px
+                );
+            }
+
+            .page {
+                min-height: 600px;
+            }
+
+            .header {
+                flex-direction: column;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .achievement {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('planner')">📔 Planner</button>
+            <button class="tab-btn" onclick="switchTab('stats')">📊 Stats</button>
+            <button class="tab-btn" onclick="switchTab('achievements')">🏆 Achievements</button>
+        </div>
+
+        <!-- Planner Tab -->
+        <div id="planner" class="tab-content active">
+            <div class="header">
+                <div class="header-title">
+                    <span id="monthYear">May 2026</span> - <span id="weekNum">Week 19</span>
+                </div>
+                <div class="header-controls">
+                    <button class="btn" id="prevBtn">← Previous</button>
+                    <button class="btn" id="todayBtn">Today</button>
+                    <button class="btn" id="nextBtn">Next →</button>
+                    <button class="btn primary" id="addBtn">+ Add Event</button>
+                </div>
+            </div>
+
+            <div class="notebook">
+                <div class="page" id="leftPage"></div>
+                <div class="spiral"></div>
+                <div class="page" id="rightPage"></div>
+            </div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="stats" class="tab-content">
+            <div class="header">
+                <div class="header-title">Weekly Statistics</div>
+            </div>
+
+            <div class="streak-container">
+                <div class="streak-label">🔥 Current Streak</div>
+                <div class="streak-number" id="streakCount">0</div>
+                <div class="streak-label">days</div>
+            </div>
+
+            <div class="stats-grid" id="statsGrid"></div>
+
+            <div class="heatmap-container">
+                <div class="heatmap-title">Activity Heat Map (Last 28 days)</div>
+                <div class="heatmap-grid" id="heatmap"></div>
+            </div>
+        </div>
+
+        <!-- Achievements Tab -->
+        <div id="achievements" class="tab-content">
+            <div class="header">
+                <div class="header-title">🏆 Achievements</div>
+            </div>
+            <div id="achievementsContainer"></div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <button class="close-btn" id="closeBtn">✕</button>
+
+            <!-- Add Event Form -->
+            <div id="addForm">
+                <div class="modal-header">Add Event</div>
+
+                <div class="form-group">
+                    <label>Pick an emoji 😊</label>
+                    <div class="emoji-picker" id="emojiPicker">
+                        <button class="emoji-btn" data-emoji="💪">💪</button>
+                        <button class="emoji-btn" data-emoji="📞">📞</button>
+                        <button class="emoji-btn" data-emoji="📍">📍</button>
+                        <button class="emoji-btn" data-emoji="👥">👥</button>
+                        <button class="emoji-btn" data-emoji="📚">📚</button>
+                        <button class="emoji-btn" data-emoji="🎯">🎯</button>
+                        <button class="emoji-btn" data-emoji="🏃">🏃</button>
+                        <button class="emoji-btn" data-emoji="💼">💼</button>
+                        <button class="emoji-btn" data-emoji="🎨">🎨</button>
+                        <button class="emoji-btn" data-emoji="🍽️">🍽️</button>
+                        <button class="emoji-btn" data-emoji="😴">😴</button>
+                        <button class="emoji-btn" data-emoji="🎮">🎮</button>
+                        <button class="emoji-btn" data-emoji="📖">📖</button>
+                        <button class="emoji-btn" data-emoji="🏋️">🏋️</button>
+                        <button class="emoji-btn" data-emoji="🧘">🧘</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Highlight color</label>
+                    <div class="color-picker" id="colorPicker">
+                        <button class="color-btn color-green selected" data-color="highlight-green"></button>
+                        <button class="color-btn color-red" data-color="highlight-red"></button>
+                        <button class="color-btn color-yellow" data-color="highlight-yellow"></button>
+                        <button class="color-btn color-blue" data-color="highlight-blue"></button>
+                        <button class="color-btn color-purple" data-color="highlight-purple"></button>
+                    </div>
+                </div>
+
+                <form id="eventForm">
+                    <div class="form-group">
+                        <label>Event Title</label>
+                        <input type="text" id="eventTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="eventDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="time" id="eventTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes (optional)</label>
+                        <textarea id="eventNotes"></textarea>
+                    </div>
+                    <div class="button-group">
+                        <button type="button" class="cancel-btn" id="cancelBtn">Cancel</button>
+                        <button type="submit" class="save-btn">Save Event</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Event Detail View -->
+            <div id="detailView" style="display:none;">
+                <div class="modal-header">Event Details</div>
+                <div id="detailContent"></div>
+                <div class="button-group">
+                    <button type="button" class="cancel-btn" id="closeDetailBtn">Close</button>
+                    <button type="button" class="delete-btn" id="deleteBtn">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'weeklyPlannerEventsV2';
+        let events = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        let currentDate = new Date();
+        let selectedEventId = null;
+        let selectedEmoji = '💪';
+        let selectedColor = 'highlight-green';
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'stats') {
+                renderStats();
+            } else if (tabName === 'achievements') {
+                renderAchievements();
+            }
+        }
+
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day;
+            return new Date(d.setDate(diff));
+        }
+
+        function getWeekDays() {
+            const start = getWeekStart(currentDate);
+            const days = [];
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(start);
+                date.setDate(date.getDate() + i);
+                days.push(date);
+            }
+            return days;
+        }
+
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function getEventsForDay(date) {
+            return events.filter(e => formatDate(new Date(e.date)) === formatDate(date))
+                .sort((a, b) => new Date(a.time) - new Date(b.time));
+        }
+
+        function renderPlanner() {
+            const weekDays = getWeekDays();
+            const dayAbbrs = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+            const monthFormatter = new Intl.DateTimeFormat('en-US', {month: 'long', year: 'numeric'});
+            document.getElementById('monthYear').textContent = monthFormatter.format(weekDays[0]);
+            const weekNum = Math.ceil((weekDays[0].getDate() + new Date(weekDays[0].getFullYear(), weekDays[0].getMonth(), 1).getDay()) / 7);
+            document.getElementById('weekNum').textContent = `Week ${weekNum}`;
+
+            const leftPage = document.getElementById('leftPage');
+            leftPage.innerHTML = '';
+            for (let i = 1; i < 4; i++) {
+                leftPage.appendChild(createDayCard(weekDays[i], dayAbbrs[weekDays[i].getDay()]));
+            }
+
+            const rightPage = document.getElementById('rightPage');
+            rightPage.innerHTML = '';
+            for (let i = 4; i < 7; i++) {
+                rightPage.appendChild(createDayCard(weekDays[i], dayAbbrs[weekDays[i].getDay()]));
+            }
+            const sundayCard = createDayCard(weekDays[0], 'Sun');
+            rightPage.appendChild(sundayCard);
+        }
+
+        function createDayCard(date, abbr) {
+            const dayEvents = getEventsForDay(date);
+            const dayNum = date.getDate();
+            const isToday = formatDate(new Date()) === formatDate(date);
+
+            const card = document.createElement('div');
+            card.className = `day-card ${isToday ? 'today' : ''}`;
+            card.onclick = () => openAddForm(formatDate(date));
+
+            let html = `
+                <div class="day-header">
+                    <div>
+                        <div class="day-abbr">${abbr}</div>
+                        <div class="day-num">${dayNum}</div>
+                    </div>
+                    <div class="day-actions">
+                        <button onclick="event.stopPropagation(); addEventForDay('${formatDate(date)}')">+</button>
+                    </div>
+                </div>
+            `;
+
+            if (dayEvents.length === 0) {
+                html += '<div class="empty-state">Click to add</div>';
+            } else {
+                html += '<div class="events-list">';
+                dayEvents.forEach(event => {
+                    const time = new Date(event.time);
+                    const timeStr = time.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+                    const checkmark = event.completed ? '✓' : '';
+                    const completedClass = event.completed ? 'completed' : '';
+
+                    html += `
+                        <div class="event ${completedClass} ${event.highlight}" onclick="event.stopPropagation(); showEventDetail('${event.id}')">
+                            <div class="event-content">
+                                <div class="event-time">${timeStr}</div>
+                                <div class="event-title">${event.title} ${checkmark}</div>
+                            </div>
+                            <div class="event-emoji">${event.emoji}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            card.innerHTML = html;
+            return card;
+        }
+
+        function saveEvents() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+            renderPlanner();
+        }
+
+        function openAddForm(date = null) {
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('detailView').style.display = 'none';
+            document.getElementById('modal').classList.add('active');
+            selectedEventId = null;
+            selectedEmoji = '💪';
+            selectedColor = 'highlight-green';
+
+            // Reset emoji selection
+            document.querySelectorAll('.emoji-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelector('[data-emoji="💪"]').classList.add('selected');
+
+            // Reset color selection
+            document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('selected'));
+            document.querySelector('[data-color="highlight-green"]').classList.add('selected');
+
+            if (date) {
+                document.getElementById('eventDate').value = date;
+            } else {
+                const today = new Date();
+                document.getElementById('eventDate').value = formatDate(today);
+            }
+            document.getElementById('eventTime').value = '09:00';
+            document.getElementById('eventTitle').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            document.getElementById('eventForm').reset();
+            selectedEventId = null;
+        }
+
+        function showEventDetail(eventId) {
+            const event = events.find(e => e.id === eventId);
+            if (!event) return;
+
+            selectedEventId = eventId;
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('detailView').style.display = 'block';
+            document.getElementById('modal').classList.add('active');
+
+            const time = new Date(event.time);
+            const timeStr = time.toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+            const date = new Date(event.date);
+            const dateStr = date.toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'});
+
+            let html = `
+                <div class="detail-row">
+                    <label>Title</label>
+                    <div class="value">${event.emoji} ${event.title}</div>
+                </div>
+                <div class="detail-row">
+                    <label>Date</label>
+                    <div class="value">${dateStr}</div>
+                </div>
+                <div class="detail-row">
+                    <label>Time</label>
+                    <div class="value">${timeStr}</div>
+                </div>
+                ${event.notes ? `
+                <div class="detail-row">
+                    <label>Notes</label>
+                    <div class="value">${event.notes}</div>
+                </div>
+                ` : ''}
+                <div class="detail-row">
+                    <label>Status</label>
+                    <div class="value">
+                        <button onclick="toggleComplete('${event.id}')" style="background: ${event.completed ? '#4CAF50' : '#f0f0f0'}; color: ${event.completed ? 'white' : '#333'}; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer;">
+                            ${event.completed ? '✓ Completed' : 'Mark Complete'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailContent').innerHTML = html;
+        }
+
+        function toggleComplete(eventId) {
+            const event = events.find(e => e.id === eventId);
+            if (event) {
+                event.completed = !event.completed;
+                saveEvents();
+                showEventDetail(eventId);
+            }
+        }
+
+        function addEventForDay(date) {
+            openAddForm(date);
+        }
+
+        // Emoji picker
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('emoji-btn')) {
+                document.querySelectorAll('.emoji-btn').forEach(btn => btn.classList.remove('selected'));
+                e.target.classList.add('selected');
+                selectedEmoji = e.target.dataset.emoji;
+            }
+        });
+
+        // Color picker
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('color-btn')) {
+                document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('selected'));
+                e.target.classList.add('selected');
+                selectedColor = e.target.dataset.color;
+            }
+        });
+
+        // Event listeners
+        document.getElementById('addBtn').addEventListener('click', () => openAddForm());
+        document.getElementById('closeBtn').addEventListener('click', closeModal);
+        document.getElementById('cancelBtn').addEventListener('click', closeModal);
+        document.getElementById('closeDetailBtn').addEventListener('click', closeModal);
+
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() - 7);
+            renderPlanner();
+        });
+
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            currentDate.setDate(currentDate.getDate() + 7);
+            renderPlanner();
+        });
+
+        document.getElementById('todayBtn').addEventListener('click', () => {
+            currentDate = new Date();
+            renderPlanner();
+        });
+
+        document.getElementById('eventForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const event = {
+                id: Date.now().toString(),
+                title: document.getElementById('eventTitle').value,
+                date: document.getElementById('eventDate').value,
+                time: document.getElementById('eventDate').value + 'T' + document.getElementById('eventTime').value,
+                notes: document.getElementById('eventNotes').value,
+                completed: false,
+                emoji: selectedEmoji,
+                highlight: selectedColor
+            };
+
+            events.push(event);
+            saveEvents();
+            closeModal();
+        });
+
+        document.getElementById('deleteBtn').addEventListener('click', () => {
+            if (selectedEventId) {
+                events = events.filter(e => e.id !== selectedEventId);
+                saveEvents();
+                closeModal();
+            }
+        });
+
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modal')) {
+                closeModal();
+            }
+        });
+
+        // Stats functions
+        function renderStats() {
+            const statsGrid = document.getElementById('statsGrid');
+            const categories = {};
+            let completedToday = 0;
+            const today = formatDate(new Date());
+
+            events.forEach(event => {
+                if (!categories[event.emoji]) {
+                    categories[event.emoji] = 0;
+                }
+                categories[event.emoji]++;
+
+                if (event.completed && formatDate(new Date(event.date)) === today) {
+                    completedToday++;
+                }
+            });
+
+            let html = '';
+            Object.entries(categories).forEach(([emoji, count]) => {
+                html += `
+                    <div class="stat-card">
+                        <div class="stat-emoji">${emoji}</div>
+                        <div class="stat-label">Count</div>
+                        <div class="stat-value">${count}</div>
+                    </div>
+                `;
+            });
+
+            statsGrid.innerHTML = html;
+
+            // Update streak
+            let streak = 0;
+            const checkDate = new Date();
+            while (true) {
+                const dateStr = formatDate(checkDate);
+                const dayEvents = events.filter(e => formatDate(new Date(e.date)) === dateStr && e.completed);
+                if (dayEvents.length === 0) break;
+                streak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+            }
+            document.getElementById('streakCount').textContent = streak;
+
+            // Heatmap
+            const heatmap = document.getElementById('heatmap');
+            heatmap.innerHTML = '';
+            const today28 = new Date();
+            for (let i = 27; i >= 0; i--) {
+                const date = new Date(today28);
+                date.setDate(date.getDate() - i);
+                const dateStr = formatDate(date);
+                const dayEvents = events.filter(e => formatDate(new Date(e.date)) === dateStr);
+                const level = Math.min(4, dayEvents.length);
+
+                const cell = document.createElement('div');
+                cell.className = `heatmap-day ${level > 0 ? `active-${level}` : ''}`;
+                cell.textContent = date.getDate();
+                heatmap.appendChild(cell);
+            }
+        }
+
+        function renderAchievements() {
+            const container = document.getElementById('achievementsContainer');
+            const achievements = [];
+            
+            const totalEvents = events.length;
+            const completedEvents = events.filter(e => e.completed).length;
+            const trainingCount = events.filter(e => e.emoji === '💪').length;
+
+            if (totalEvents >= 5) achievements.push('🎯 5 Events Created');
+            if (totalEvents >= 20) achievements.push('🔥 20 Events Created');
+            if (completedEvents >= 10) achievements.push('✓ 10 Tasks Completed');
+            if (completedEvents >= 30) achievements.push('⭐ 30 Tasks Completed');
+            if (trainingCount >= 5) achievements.push('💪 5 Training Sessions');
+            if (completedEvents / Math.max(totalEvents, 1) > 0.8) achievements.push('🏆 80% Completion Rate');
+
+            let html = '';
+            achievements.forEach(ach => {
+                html += `<div class="achievement">${ach}</div>`;
+            });
+
+            if (achievements.length === 0) {
+                html = '<div style="text-align: center; padding: 40px; color: #999;">Start creating and completing events to unlock achievements! 🚀</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        renderPlanner();
+    </script>
+</body>
+</html>
